@@ -1,4 +1,4 @@
-package part1recap
+package part1Intro
 
 import java.util.concurrent.Executors
 import scala.concurrent.{ExecutionContext, Future}
