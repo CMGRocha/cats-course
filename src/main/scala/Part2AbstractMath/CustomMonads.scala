@@ -65,9 +65,31 @@ object CustomMonads {
         case Branch(left, right) => Branch(stackRecursion(left), stackRecursion(right))
       }
 
-      stackRecursion(f(a))
-    }
+      // stackRecursion(f(a))
+      @tailrec
+      def tailRec(todo: List[Tree[Either[A, B]]], expanded: List[Tree[Either[A, B]]] = Nil, done: List[Tree[B]] = Nil): Tree[B] =
+        if (todo.isEmpty) done.head
+        else todo.head match {
+          case Leaf(Left(value)) => tailRec(f(value) :: todo.tail, expanded, done)
+          case Leaf(Right(value)) => tailRec(todo.tail, expanded, Leaf(value) :: done)
+          case node@Branch(left, right) =>
+            if (!expanded.contains(node)) {
+              tailRec(left :: right :: todo, expanded :+ node, done)
+            } else {
+              val newLeft = done.head
+              val newRight = done.tail.head
+              val newBranch = Branch(newLeft, newRight)
+              tailRec(todo.tail, expanded, newBranch :: done.drop(2))
+            }
+        }
 
+      tailRec(List(f(a)))
+    }
   }
 
+  def main(args: Array[String]): Unit = {
+    val tree: Tree[Int] = Branch(Leaf(10), Leaf(20))
+    val changedTree = TreeMonad.flatMap(tree)(v => Branch(Leaf(v + 1), Leaf(v + 2)))
+    println(changedTree)
+  }
 }
